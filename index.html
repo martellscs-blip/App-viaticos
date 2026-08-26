@@ -73,7 +73,7 @@ header{background:linear-gradient(160deg,var(--slate) 0%,var(--slate-dark) 100%)
 .subtab.active{background:var(--slate);color:#fff}
 .view{padding:8px 14px 0}
 
-.monitor{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.monitor{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
 .mcard{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:13px;display:flex;flex-direction:column;gap:8px;cursor:pointer;transition:.12s}
 .mcard.no-tap{cursor:default}
 .mcard:active:not(.no-tap){transform:scale(.97)}
@@ -518,6 +518,10 @@ header{background:linear-gradient(160deg,var(--slate) 0%,var(--slate-dark) 100%)
         <button id="driveImportBtn" style="background:none;border:none;color:#6BAED6;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;font-family:inherit;padding:4px">Importar manual</button>
       </div>
 
+      <div style="margin-top:10px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:rgba(100,160,220,.8);margin-bottom:6px">CLIENT ID DE GOOGLE (opcional — para subir directo sin menú)</div>
+        <input type="text" id="gClientId" placeholder="xxxxx.apps.googleusercontent.com" style="width:100%;background:rgba(255,255,255,.07);border:1.5px solid rgba(100,140,200,.35);border-radius:11px;padding:11px 12px;font-size:12px;font-family:inherit;color:#fff;box-sizing:border-box">
+      </div>
       <input type="file" id="restoreInput" accept="application/json,.json" style="display:none">
       <input type="file" id="importManualInput" accept="application/json,.json" style="display:none">
     </div>
@@ -875,20 +879,22 @@ function render(){
 /* ============================ VIEWS ============================ */
 function viewResumen(){
   const mlabel=activeMonth?monthName(activeMonth):'Todos los meses';
-  const gMes=totalGastado(),fSi=sumFactMes(true),fNo=sumFactMes(false);
+  const gMes=totalGastado();
+  const key=activeMonth||currentMonthKey();
+  const presup=data.presupuesto[key]||0;
+  const presupDisp=presup-gMes;
   const cats=[
     {k:'casetas',name:'Casetas',icon:ICON.caseta,color:'bg-slate',n:monthFilter(data.casetas).length,v:sumTypeMes('casetas')},
     {k:'hospedaje',name:'Hospedaje',icon:ICON.hospedaje,color:'bg-blue',n:monthFilter(data.hospedaje).length,v:sumTypeMes('hospedaje')},
     {k:'comidas',name:'Comidas',icon:ICON.comida,color:'bg-amber',n:monthFilter(data.comidas).length,v:sumTypeMes('comidas')}
   ];
+  const presupCard=`<div class="cat-row" data-presupedit="${key}"><div class="ci ${presupDisp<0?'bg-red':'bg-green'}">${ICON.chart}</div><div><div class="nm">Presupuesto mensual</div>${presup>0?`<div class="ct">${fmt(presup)} autorizado</div>`:''}</div><div class="val" style="color:${presupDisp<0?'var(--red)':presupDisp===0&&presup===0?'var(--muted)':'var(--green)'}">${presup===0?'—':fmt(presupDisp)}</div></div>`;
   return `
-  ${presupuestoCard()}
   <div class="section-title">${ICON.spend} Balance \u00b7 ${mlabel}</div>
   <div class="monitor">
-    <div class="mcard" data-mov="todos"><div class="ic bg-red">${ICON.spend}</div><div><div class="lab">Gastado del mes</div><div class="amt">${fmt(gMes)}</div></div></div>
-    <div class="mcard" data-mov="si"><div class="ic bg-green">${ICON.check}</div><div><div class="lab">Facturado</div><div class="amt">${fmt(fSi)}</div></div></div>
-    <div class="mcard" data-mov="no"><div class="ic bg-amber">${ICON.pending}</div><div><div class="lab">Sin facturar</div><div class="amt">${fmt(fNo)}</div></div></div>
-    <div class="mcard no-tap"><div class="ic bg-slate">${ICON.wallet}</div><div><div class="lab">Disponible fondo</div><div class="amt" style="${data.fondoFijo-gMes<0?'color:var(--red)':''}">${fmt(data.fondoFijo-gMes)}</div></div></div>
+    <div class="cat-row" data-mov="todos"><div class="ci bg-red">${ICON.spend}</div><div><div class="nm">Gastado del mes</div></div><div class="val">${fmt(gMes)}</div></div>
+    <div class="cat-row" style="cursor:default"><div class="ci bg-slate">${ICON.wallet}</div><div><div class="nm">Disponible fondo</div></div><div class="val" style="${data.fondoFijo-gMes<0?'color:var(--red)':''}">${fmt(data.fondoFijo-gMes)}</div></div>
+    ${presupCard}
   </div>
   <div class="section-title">Gastos por categor\u00eda \u00b7 ${mlabel}</div>
   <div class="cat-list">${cats.map(c=>`<div class="cat-row" data-cat-goto="${c.k}"><div class="ci ${c.color}">${c.icon}</div><div><div class="nm">${c.name}</div><div class="ct">${c.n} registro(s)</div></div><div class="val">${fmt(c.v)}</div></div>`).join('')}</div>
@@ -1450,6 +1456,7 @@ function openReport(opts){
 function openActualizar(){
   ['ghOwner','ghRepo','ghPath','ghToken'].forEach(id=>{try{const v=localStorage.getItem('gh_'+id);if(v){const el=document.getElementById(id);if(el)el.value=v;}}catch(e){}});
 
+  try{const cid=localStorage.getItem('gdrive_client_id');if(cid&&document.getElementById('gClientId'))document.getElementById('gClientId').value=cid;}catch(e){}
   if(document.getElementById('driveStatus'))document.getElementById('driveStatus').style.display='none';
   document.getElementById('overlayActualizar').style.display='flex';
 }
@@ -1497,25 +1504,59 @@ document.getElementById('repPrint').addEventListener('click',()=>window.print())
 document.getElementById('updateBtn').addEventListener('click',openActualizar);
 document.getElementById('actualizarCancelBtn').addEventListener('click',closeActualizar);
 document.getElementById('overlayActualizar').addEventListener('click',e=>{if(e.target.id==='overlayActualizar')closeActualizar();});
-/* ===== Google Drive via Web Share API ===== */
+/* ===== Google Drive OAuth + Web Share fallback ===== */
+function loadGIS(){return new Promise(res=>{if(window.google&&google.accounts)return res();const sc=document.createElement('script');sc.src='https://accounts.google.com/gsi/client';sc.onload=res;document.head.appendChild(sc);});}
+
 async function uploadToDrive(){
   const ds=document.getElementById('driveStatus');
-  const json=JSON.stringify(data,null,2);
-  const name='Respaldo_Viaticos_BODESA_'+todayISO()+'.json';
-  const file=new File([json],name,{type:'application/json'});
-  if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-    try{
-      await navigator.share({title:'Respaldo Viáticos BODESA',files:[file]});
-      ds.style.display='block';ds.style.background='rgba(0,180,100,.15)';ds.style.color='#50E080';
-      ds.textContent='✅ Listo — guarda el archivo en tu Google Drive';
-    }catch(e){if(e.name!=='AbortError'){backupData();}}
-  }else{
-    backupData();
-    ds.style.display='block';ds.style.background='rgba(100,140,200,.15)';ds.style.color='#6BAED6';
-    ds.textContent='⏬ Descargado — mévelo a Drive desde tu gestor de archivos';
+  const clientId=(localStorage.getItem('gdrive_client_id')||'').trim();
+  if(!clientId){
+    // Sin Client ID: usar Web Share API nativo de Android
+    const json=JSON.stringify(data,null,2);
+    const name='Respaldo_Viaticos_BODESA_'+todayISO()+'.json';
+    const file=new File([json],name,{type:'application/json'});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({title:'Respaldo Viáticos BODESA',files:[file]});
+        ds.style.display='block';ds.style.background='rgba(0,180,100,.15)';ds.style.color='#50E080';
+        ds.textContent='✅ Listo — elige Google Drive en el menú';
+      }catch(e){if(e.name!=='AbortError')backupData();}
+    }else{backupData();}
+    return;
+  }
+  ds.style.display='block';ds.style.background='rgba(100,140,200,.15)';ds.style.color='#6BAED6';
+  ds.textContent='⏳ Conectando con Google…';
+  try{
+    await loadGIS();
+    const tc=google.accounts.oauth2.initTokenClient({
+      client_id:clientId,
+      scope:'https://www.googleapis.com/auth/drive.file',
+      callback:async r=>{
+        if(r.error){ds.style.background='rgba(220,80,80,.15)';ds.style.color='#F08080';ds.textContent='❌ Error: '+r.error;return;}
+        ds.textContent='⏳ Subiendo a Drive…';
+        const json=JSON.stringify(data,null,2);
+        const name='Respaldo_Viaticos_BODESA_'+todayISO()+'.json';
+        const form=new FormData();
+        form.append('metadata',new Blob([JSON.stringify({name,mimeType:'application/json'})],{type:'application/json'}));
+        form.append('file',new Blob([json],{type:'application/json'}));
+        const res=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+          {method:'POST',headers:{Authorization:'Bearer '+r.access_token},body:form});
+        if(res.ok){
+          ds.style.background='rgba(0,180,100,.15)';ds.style.color='#50E080';
+          ds.textContent='✅ Guardado automáticamente en Google Drive: '+name;
+        }else{
+          const err=await res.json();
+          ds.style.background='rgba(220,80,80,.15)';ds.style.color='#F08080';
+          ds.textContent='❌ '+(err.error?.message||'Error al subir');
+        }
+      }
+    });
+    tc.requestAccessToken({prompt:''});
+  }catch(e){
+    ds.style.background='rgba(220,80,80,.15)';ds.style.color='#F08080';
+    ds.textContent='❌ Error: '+e.message;
   }
 }
-
 document.getElementById('driveBackupBtn').addEventListener('click',uploadToDrive);
 document.getElementById('driveExportBtn').addEventListener('click',backupData);
 document.getElementById('restoreShowBtn').addEventListener('click',()=>document.getElementById('restoreInput').click());
@@ -1523,6 +1564,7 @@ document.getElementById('driveImportBtn').addEventListener('click',()=>document.
 document.getElementById('restoreInput').addEventListener('change',e=>{restoreData(e.target.files[0]);e.target.value='';closeActualizar();});
 document.getElementById('importManualInput').addEventListener('change',e=>{restoreData(e.target.files[0]);e.target.value='';closeActualizar();});
 
+document.getElementById('gClientId').addEventListener('change',e=>{const v=e.target.value.trim();if(v)localStorage.setItem('gdrive_client_id',v);});
 document.getElementById('ghConfigBtn').addEventListener('click',()=>{const f=document.getElementById('ghConfigFields');f.style.display=f.style.display==='none'?'block':'none';});
 document.getElementById('ghDropZone').addEventListener('click',()=>document.getElementById('ghFile').click());
 document.getElementById('ghFile').addEventListener('change',e=>{const f=e.target.files[0];if(f)document.getElementById('ghDropZone').textContent='\u2705 '+f.name;});
