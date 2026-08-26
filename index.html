@@ -765,7 +765,13 @@ async function load(){
   let raw=null;
   try{const r=await window.storage.get(STORE_KEY,false);if(r&&r.value)raw=r.value;}catch(e){}
   if(!raw){try{raw=localStorage.getItem(STORE_KEY);}catch(e){}}
-  if(raw){try{const d=JSON.parse(raw);Object.assign(data,d);}catch(e){}}
+  if(!raw){
+    // Pre-load backup data
+    const seed={"fondoFijo":10000,"casetas":[{"id":"mqvsrm8jot0p","fecha":"2026-06-25","lugar":"SAN MARCOS","monto":213,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato"},{"id":"mqzye4mc2jzn","fecha":"2026-06-29","lugar":"San Marcos","monto":213,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato"},{"id":"mr1d9tefwkly","fecha":"2026-06-29","lugar":"Sayula","monto":92,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato"},{"id":"mr6fve9kcdtc","fecha":"2026-07-03","lugar":"Yurecuaro","monto":600,"personas":2,"facturado":false,"viaje":"Campañas Yurecuaro"},{"id":"mrml84ryu41f","fecha":"2026-07-15","lugar":"San Marcos","monto":213,"personas":1,"facturado":false,"viaje":"Capacitación Capturista"}],"hospedaje":[{"id":"mqvu9hwqmoei","fecha":"2026-06-25","lugar":"LA PIEDAD, Mich","monto":552,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","noches":1,"habitacion":"sencilla"},{"id":"mqvuewwon5fs","fecha":"2026-06-26","lugar":"GUANAJUATO, Gto","monto":540,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","noches":1,"habitacion":"sencilla"},{"id":"mqvug0r7k5dp","fecha":"2026-06-28","lugar":"GUANAJUATO, Gto","monto":540,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","noches":1,"habitacion":"sencilla"},{"id":"mqx5hamr2fq3","fecha":"2026-06-27","lugar":"GUANAJUATO, Gto","monto":1250,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","noches":1,"habitacion":"sencilla"}],"comidas":[{"id":"mqvsxz71vpvu","fecha":"2026-06-25","lugar":"ZAPOTLAN EL GRANDE, Jal","monto":164,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Comida"},{"id":"mqvszfk9d8dy","fecha":"2026-06-25","lugar":"LA PIEDAD, Mich","monto":119,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Cena"},{"id":"mqvubbhn0oun","fecha":"2026-06-26","lugar":"GUANAJUATO, Gto","monto":140,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Desayuno"},{"id":"mqvud38l5s5f","fecha":"2026-06-26","lugar":"GUANAJUATO, Gto","monto":195,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Comida"},{"id":"mqvudx6ge7wq","fecha":"2026-06-26","lugar":"GUANAJUATO, Gto","monto":140,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Cena"},{"id":"mqx5bn7o0qzi","fecha":"2026-06-27","lugar":"GUANAJUATO, Gto","monto":139,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Desayuno"},{"id":"mqymxg000p80","fecha":"2026-06-28","lugar":"GUANAJUATO, Gto","monto":124,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Comida"},{"id":"mqymy23y8n0u","fecha":"2026-06-28","lugar":"GUANAJUATO, Gto","monto":154,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Cena"},{"id":"mqyn1hznkaeh","fecha":"2026-06-27","lugar":"GUANAJUATO, Gto","monto":235,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Comida"},{"id":"mqzjzekbgjqe","fecha":"2026-06-29","lugar":"GUANAJUATO, Gto","monto":209,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Comida"},{"id":"mqzydfotw8pv","fecha":"2026-06-29","lugar":"GUANAJUATO, Gto","monto":156,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Desayuno"},{"id":"mr5dbbom8r3r","fecha":"2026-07-03","lugar":"MANZANILLO, Col","monto":197,"personas":1,"facturado":false,"viaje":"Entrega de celular a capturista","tipo":"Comida"},{"id":"mre0cn97tnvl","fecha":"2026-07-09","lugar":"MANZANILLO, Col","monto":241,"personas":1,"facturado":false,"viaje":"Convenio Timsa","tipo":"Comida"},{"id":"mrml8vzhsud2","fecha":"2026-07-15","lugar":"ZAPOTLAN EL GRANDE, Jal","monto":192,"personas":1,"facturado":false,"viaje":"","tipo":"Comida"}],"tarifasCustom":{},"viajesCerrados":["Capacitación promotor Guanajuato","Campañas Yurecuaro","Entrega de celular a capturista"],"hiddenPlaces":[],"perfil":{"nombre":"MAURO MARTELL DENIS","empleado":"502778"},"gastosPersonales":[],"presupuesto":{}};
+    Object.assign(data,seed);
+  } else {
+    try{const d=JSON.parse(raw);Object.assign(data,d);}catch(e){}
+  }
   data.casetas=data.casetas||[];data.hospedaje=data.hospedaje||[];data.comidas=data.comidas||[];
   data.tarifasCustom=data.tarifasCustom||{};data.viajesCerrados=data.viajesCerrados||[];
   data.hiddenPlaces=data.hiddenPlaces||[];data.perfil=data.perfil||{nombre:'MAURO MARTELL DENIS',empleado:'502778'};
@@ -1568,11 +1574,9 @@ document.getElementById('view').addEventListener('input',e=>{
 
 
 /* ============================ SERVICE WORKER ============================ */
-if('serviceWorker' in navigator){
+if('serviceWorker' in navigator && location.protocol==='https:' && !location.hostname.includes('claudeusercontent')){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js')
-      .then(r=>console.log('SW registered:',r.scope))
-      .catch(e=>console.log('SW error:',e));
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
   });
 }
 </script>
