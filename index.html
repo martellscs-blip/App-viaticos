@@ -507,33 +507,24 @@ header{background:linear-gradient(160deg,var(--slate) 0%,var(--slate-dark) 100%)
 
     <div style="border:1px solid rgba(100,140,200,.35);border-radius:16px;padding:18px;margin-bottom:16px">
       <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#6BAED6;margin-bottom:14px">GOOGLE DRIVE</div>
-      <button id="driveBackupBtn" style="width:100%;background:#1E3A5F;border:1.5px solid #2D6FAB;border-radius:12px;padding:16px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit;margin-bottom:14px">
+      <button id="driveBackupBtn" style="width:100%;background:#1E3A5F;border:1.5px solid #2D6FAB;border-radius:12px;padding:16px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit;margin-bottom:12px">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
         Guardar respaldo en Google Drive
       </button>
       <div id="driveStatus" style="font-size:12px;padding:8px 12px;border-radius:8px;display:none;margin-bottom:10px"></div>
-      <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin-bottom:10px">
+      <div style="text-align:center">
         <button id="restoreShowBtn" style="background:none;border:none;color:#6BAED6;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;font-family:inherit;padding:4px">Restaurar respaldo</button>
-        <button id="driveExportBtn" style="background:none;border:none;color:#6BAED6;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;font-family:inherit;padding:4px">Exportar manual</button>
-        <button id="driveImportBtn" style="background:none;border:none;color:#6BAED6;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;font-family:inherit;padding:4px">Importar manual</button>
-      </div>
-
-      <div style="margin-top:10px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:rgba(100,160,220,.8);margin-bottom:6px">CLIENT ID DE GOOGLE (opcional — para subir directo sin menú)</div>
-        <input type="text" id="gClientId" placeholder="xxxxx.apps.googleusercontent.com" style="width:100%;background:rgba(255,255,255,.07);border:1.5px solid rgba(100,140,200,.35);border-radius:11px;padding:11px 12px;font-size:12px;font-family:inherit;color:#fff;box-sizing:border-box">
       </div>
       <input type="file" id="restoreInput" accept="application/json,.json" style="display:none">
-      <input type="file" id="importManualInput" accept="application/json,.json" style="display:none">
     </div>
 
     <div style="border:1px solid rgba(100,140,200,.35);border-radius:16px;padding:18px;margin-bottom:16px">
-      <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#6BAED6;margin-bottom:14px">ACTUALIZAR APP (GITHUB)</div>
-      <div id="ghDropZone" style="border:1.5px dashed rgba(100,160,220,.5);border-radius:12px;padding:18px;text-align:center;cursor:pointer;color:#6BAED6;font-weight:700;font-size:13px;margin-bottom:12px">Selecciona el nuevo bodesa-viaticos.html</div>
+      <div class="upload-zone" id="ghDropZone">Cargar index.html</div>
       <input type="file" id="ghFile" accept=".html" style="display:none">
       <input type="password" id="ghToken" placeholder="Token de GitHub (ghp_...)" style="width:100%;background:rgba(255,255,255,.07);border:1.5px solid rgba(100,140,200,.35);border-radius:11px;padding:12px 14px;font-size:14px;font-family:inherit;color:#fff;box-sizing:border-box;margin-bottom:12px">
-      <button id="ghUploadBtn" style="width:100%;background:#1E3A5F;border:1.5px solid #2D6FAB;border-radius:12px;padding:14px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Subir actualización</button>
-      <div id="ghRepoToggle" style="text-align:center;margin-top:10px"><button id="ghConfigBtn" style="background:none;border:none;color:rgba(100,160,220,.7);font-size:11px;cursor:pointer;font-family:inherit;text-decoration:underline">⚙️ Configurar repositorio</button></div>
-      <div id="ghConfigFields" style="display:none;margin-top:12px;display:none">
+      <button id="ghUploadBtn" style="width:100%;background:#1E3A5F;border:1.5px solid #2D6FAB;border-radius:12px;padding:14px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Subir actualizaci&#243;n</button>
+      <div style="text-align:center;margin-top:10px"><button id="ghConfigBtn" style="background:none;border:none;color:rgba(100,160,220,.7);font-size:11px;cursor:pointer;font-family:inherit;text-decoration:underline">&#9881;&#65039; Configurar repositorio</button></div>
+      <div id="ghConfigFields" style="display:none;margin-top:12px">
         <input type="text" id="ghOwner" placeholder="Owner / usuario" style="width:100%;background:rgba(255,255,255,.07);border:1.5px solid rgba(100,140,200,.35);border-radius:11px;padding:11px 12px;font-size:13px;font-family:inherit;color:#fff;box-sizing:border-box;margin-bottom:8px">
         <input type="text" id="ghRepo" placeholder="Nombre del repositorio" style="width:100%;background:rgba(255,255,255,.07);border:1.5px solid rgba(100,140,200,.35);border-radius:11px;padding:11px 12px;font-size:13px;font-family:inherit;color:#fff;box-sizing:border-box;margin-bottom:8px">
         <input type="text" id="ghPath" placeholder="Ruta del archivo (ej. index.html)" value="index.html" style="width:100%;background:rgba(255,255,255,.07);border:1.5px solid rgba(100,140,200,.35);border-radius:11px;padding:11px 12px;font-size:13px;font-family:inherit;color:#fff;box-sizing:border-box">
@@ -1456,7 +1447,6 @@ function openReport(opts){
 function openActualizar(){
   ['ghOwner','ghRepo','ghPath','ghToken'].forEach(id=>{try{const v=localStorage.getItem('gh_'+id);if(v){const el=document.getElementById(id);if(el)el.value=v;}}catch(e){}});
 
-  try{const cid=localStorage.getItem('gdrive_client_id');if(cid&&document.getElementById('gClientId'))document.getElementById('gClientId').value=cid;}catch(e){}
   if(document.getElementById('driveStatus'))document.getElementById('driveStatus').style.display='none';
   document.getElementById('overlayActualizar').style.display='flex';
 }
@@ -1555,11 +1545,8 @@ async function uploadToDrive(){
   backupData();
 }
 document.getElementById('driveBackupBtn').addEventListener('click',uploadToDrive);
-document.getElementById('driveExportBtn').addEventListener('click',backupData);
 document.getElementById('restoreShowBtn').addEventListener('click',()=>document.getElementById('restoreInput').click());
-document.getElementById('driveImportBtn').addEventListener('click',()=>document.getElementById('importManualInput').click());
 document.getElementById('restoreInput').addEventListener('change',e=>{restoreData(e.target.files[0]);e.target.value='';closeActualizar();});
-document.getElementById('importManualInput').addEventListener('change',e=>{restoreData(e.target.files[0]);e.target.value='';closeActualizar();});
 
 document.getElementById('ghConfigBtn').addEventListener('click',()=>{const f=document.getElementById('ghConfigFields');f.style.display=f.style.display==='none'?'block':'none';});
 document.getElementById('ghDropZone').addEventListener('click',()=>document.getElementById('ghFile').click());
