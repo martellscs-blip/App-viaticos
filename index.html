@@ -1106,19 +1106,19 @@ function viewPersonal(){
 function presupuestoCard(){
   const key=activeMonth||currentMonthKey();
   const autorizado=data.presupuesto[key]||0;
+  if(autorizado===0)return '';
   const gastado=gastoParaMes(key);
   const restante=autorizado-gastado;
-  const pct=autorizado>0?Math.min(100,gastado/autorizado*100):0;
-  const over=gastado>autorizado&&autorizado>0;
+  const pct=Math.min(100,gastado/autorizado*100);
+  const over=gastado>autorizado;
   const mlabel=monthName(key);
   return `<div class="pres-card">
     <div class="pres-head"><span class="pres-title">Presupuesto autorizado \u00b7 ${mlabel}</span><button class="pres-edit-btn" data-presupedit="${key}">Editar</button></div>
-    ${autorizado===0?`<div style="text-align:center;color:var(--muted);font-size:13px;padding:8px 0">Sin presupuesto capturado \u00b7 toca Editar para agregar</div>`:
-      `<div class="pres-row"><span class="pres-label">Autorizado</span><span class="pres-val">${fmt(autorizado)}</span></div>
-       <div class="pres-row"><span class="pres-label">Gastado</span><span class="pres-val" style="color:${over?'var(--red)':'var(--text)'}">${fmt(gastado)}</span></div>
-       <div class="pres-row" style="margin-bottom:10px"><span class="pres-label">${over?'Excedido en':'Disponible'}</span><span class="pres-val" style="color:${over?'var(--red)':'var(--green)'}">${fmt(Math.abs(restante))}</span></div>
-       <div class="bar ${over?'over':''}"><div style="width:${pct}%"></div></div>
-       <div class="bar-cap"><span>${Math.round(pct)}% usado</span><span>${fmt(restante)} restante</span></div>`}
+    <div class="pres-row"><span class="pres-label">Autorizado</span><span class="pres-val">${fmt(autorizado)}</span></div>
+    <div class="pres-row"><span class="pres-label">Gastado</span><span class="pres-val" style="color:${over?'var(--red)':'var(--text)'}">${fmt(gastado)}</span></div>
+    <div class="pres-row" style="margin-bottom:10px"><span class="pres-label">${over?'Excedido en':'Disponible'}</span><span class="pres-val" style="color:${over?'var(--red)':'var(--green)'}">${fmt(Math.abs(restante))}</span></div>
+    <div class="bar ${over?'over':''}"><div style="width:${pct}%"></div></div>
+    <div class="bar-cap"><span>${Math.round(pct)}% usado</span><span>${fmt(restante)} restante</span></div>
   </div>`;
 }
 function viewPresupuestoAnual(){
@@ -1396,7 +1396,17 @@ function exportData(){
   data.comidas.slice().sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).forEach(e=>push(e.tipo||'Comida',e,e.tipo||'',authFor('comidas',e)));
   if(!rows.length){alert('No hay gastos para exportar.');return;}
   if(typeof XLSX!=='undefined'&&!window.__noxlsx){
-    try{const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Movimientos');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(byMonth().reverse().map(m=>({Mes:monthName(m.key),Casetas:m.casetas,Hospedaje:m.hospedaje,Comidas:m.comidas,Total:m.total}))),'Por mes');XLSX.writeFile(wb,'Viaticos_BODESA.xlsx');return;}catch(e){}
+    try{
+      const wb=XLSX.utils.book_new();
+      if(rows.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Movimientos');
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(byMonth().reverse().map(m=>({Mes:monthName(m.key),Casetas:m.casetas,Hospedaje:m.hospedaje,Comidas:m.comidas,Total:m.total}))),'Por mes');
+      const bolsaRows=(data.gastosPersonales||[]).slice().sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).map(x=>({Fecha:fmtDate(x.fecha||''),Concepto:x.concepto||'',Tipo:x.tipo==='propio'?'De mi bolsa':'Del fondo',Monto:x.monto||0,Estado:x.tipo==='fondo'?(x.repuesto?'Repuesto':'Pendiente'):(x.recuperado?'Recuperado':'Pendiente'),Notas:x.notas||''}));
+      if(bolsaRows.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(bolsaRows),'Mi Bolsa');
+      const yr=new Date().getFullYear();
+      const presupRows=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'].map((mn,i)=>{const k=yr+'-'+String(i+1).padStart(2,'0');const aut=data.presupuesto[k]||0;const gas=gastoParaMes(k);return{Mes:mn+' '+yr,Autorizado:aut,Gastado:gas,Saldo:aut-gas,Estado:aut===0?'Sin capturar':gas>aut?'Excedido':'OK'};});
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(presupRows),'Presupuesto '+yr);
+      XLSX.writeFile(wb,'Viaticos_BODESA.xlsx');return;
+    }catch(e){}
   }
   const cols=Object.keys(rows[0]);const esc=v=>{v=(v==null?'':String(v)).replace(/"/g,'""');return /[",\n;]/.test(v)?`"${v}"`:v;};
   const csv='\uFEFF'+cols.join(',')+'\\n'+rows.map(r=>cols.map(c=>esc(r[c])).join(',')).join('\\n');
