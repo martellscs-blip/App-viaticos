@@ -1504,58 +1504,55 @@ document.getElementById('repPrint').addEventListener('click',()=>window.print())
 document.getElementById('updateBtn').addEventListener('click',openActualizar);
 document.getElementById('actualizarCancelBtn').addEventListener('click',closeActualizar);
 document.getElementById('overlayActualizar').addEventListener('click',e=>{if(e.target.id==='overlayActualizar')closeActualizar();});
-/* ===== Google Drive OAuth + Web Share fallback ===== */
-function loadGIS(){return new Promise(res=>{if(window.google&&google.accounts)return res();const sc=document.createElement('script');sc.src='https://accounts.google.com/gsi/client';sc.onload=res;document.head.appendChild(sc);});}
+/* ===== Google Drive via File System Access API ===== */
+let _savedFileHandle=null;
 
 async function uploadToDrive(){
   const ds=document.getElementById('driveStatus');
-  const clientId=(localStorage.getItem('gdrive_client_id')||'').trim();
-  if(!clientId){
-    // Sin Client ID: usar Web Share API nativo de Android
-    const json=JSON.stringify(data,null,2);
-    const name='Respaldo_Viaticos_BODESA_'+todayISO()+'.json';
-    const file=new File([json],name,{type:'application/json'});
-    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-      try{
-        await navigator.share({title:'Respaldo Viáticos BODESA',files:[file]});
-        ds.style.display='block';ds.style.background='rgba(0,180,100,.15)';ds.style.color='#50E080';
-        ds.textContent='✅ Listo — elige Google Drive en el menú';
-      }catch(e){if(e.name!=='AbortError')backupData();}
-    }else{backupData();}
+  const json=JSON.stringify(data,null,2);
+  const FNAME='Respaldo_Viaticos_BODESA.json';
+
+  // Intento 1: File System Access API (abre el selector de archivos de Android)
+  if(window.showSaveFilePicker){
+    try{
+      // Si ya tenemos el handle del archivo anterior, usarlo directamente
+      let handle=_savedFileHandle;
+      if(handle){
+        try{await handle.requestPermission({mode:'readwrite'});}catch(e){handle=null;}
+      }
+      if(!handle){
+        handle=await window.showSaveFilePicker({
+          suggestedName:FNAME,
+          types:[{description:'Respaldo JSON',accept:{'application/json':['.json']}}]
+        });
+        _savedFileHandle=handle;
+      }
+      const writable=await handle.createWritable();
+      await writable.write(json);
+      await writable.close();
+      ds.style.display='block';ds.style.background='rgba(0,180,100,.15)';ds.style.color='#50E080';
+      ds.textContent='✅ Respaldo guardado correctamente';
+      return;
+    }catch(e){
+      if(e.name==='AbortError'){return;} // usuario canceló
+      _savedFileHandle=null;
+      // Si falla, sigue con Web Share
+    }
+  }
+
+  // Intento 2: Web Share API (menú nativo de Android)
+  const file=new File([json],FNAME,{type:'application/json'});
+  if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+    try{
+      await navigator.share({title:'Respaldo Viáticos BODESA',files:[file]});
+      ds.style.display='block';ds.style.background='rgba(0,180,100,.15)';ds.style.color='#50E080';
+      ds.textContent='✅ Elige Google Drive para guardar';
+    }catch(e){if(e.name!=='AbortError'){backupData();}}
     return;
   }
-  ds.style.display='block';ds.style.background='rgba(100,140,200,.15)';ds.style.color='#6BAED6';
-  ds.textContent='⏳ Conectando con Google…';
-  try{
-    await loadGIS();
-    const tc=google.accounts.oauth2.initTokenClient({
-      client_id:clientId,
-      scope:'https://www.googleapis.com/auth/drive.file',
-      callback:async r=>{
-        if(r.error){ds.style.background='rgba(220,80,80,.15)';ds.style.color='#F08080';ds.textContent='❌ Error: '+r.error;return;}
-        ds.textContent='⏳ Subiendo a Drive…';
-        const json=JSON.stringify(data,null,2);
-        const name='Respaldo_Viaticos_BODESA_'+todayISO()+'.json';
-        const form=new FormData();
-        form.append('metadata',new Blob([JSON.stringify({name,mimeType:'application/json'})],{type:'application/json'}));
-        form.append('file',new Blob([json],{type:'application/json'}));
-        const res=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-          {method:'POST',headers:{Authorization:'Bearer '+r.access_token},body:form});
-        if(res.ok){
-          ds.style.background='rgba(0,180,100,.15)';ds.style.color='#50E080';
-          ds.textContent='✅ Guardado automáticamente en Google Drive: '+name;
-        }else{
-          const err=await res.json();
-          ds.style.background='rgba(220,80,80,.15)';ds.style.color='#F08080';
-          ds.textContent='❌ '+(err.error?.message||'Error al subir');
-        }
-      }
-    });
-    tc.requestAccessToken({prompt:''});
-  }catch(e){
-    ds.style.background='rgba(220,80,80,.15)';ds.style.color='#F08080';
-    ds.textContent='❌ Error: '+e.message;
-  }
+
+  // Fallback: descarga normal
+  backupData();
 }
 document.getElementById('driveBackupBtn').addEventListener('click',uploadToDrive);
 document.getElementById('driveExportBtn').addEventListener('click',backupData);
@@ -1564,7 +1561,6 @@ document.getElementById('driveImportBtn').addEventListener('click',()=>document.
 document.getElementById('restoreInput').addEventListener('change',e=>{restoreData(e.target.files[0]);e.target.value='';closeActualizar();});
 document.getElementById('importManualInput').addEventListener('change',e=>{restoreData(e.target.files[0]);e.target.value='';closeActualizar();});
 
-document.getElementById('gClientId').addEventListener('change',e=>{const v=e.target.value.trim();if(v)localStorage.setItem('gdrive_client_id',v);});
 document.getElementById('ghConfigBtn').addEventListener('click',()=>{const f=document.getElementById('ghConfigFields');f.style.display=f.style.display==='none'?'block':'none';});
 document.getElementById('ghDropZone').addEventListener('click',()=>document.getElementById('ghFile').click());
 document.getElementById('ghFile').addEventListener('change',e=>{const f=e.target.files[0];if(f)document.getElementById('ghDropZone').textContent='\u2705 '+f.name;});
@@ -1636,7 +1632,16 @@ document.getElementById('view').addEventListener('input',e=>{
 })();
 
 /* ============================ INIT ============================ */
-(async function(){await load();activeMonth=currentMonthKey();render();})();
+(async function(){
+  try{
+    await load();
+    activeMonth=currentMonthKey();
+    render();
+  }catch(err){
+    document.getElementById('view').innerHTML='<div class="empty"><p>Error al cargar</p><small>'+err.message+'</small><br><br><button onclick="location.reload()" style="background:var(--slate);color:#fff;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer">Recargar app</button></div>';
+    console.error('Init error:',err);
+  }
+})();
 
 
 /* ============================ SERVICE WORKER ============================ */
