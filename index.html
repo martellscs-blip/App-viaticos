@@ -826,9 +826,9 @@ function monthKeysForNav(){
     const d=new Date(now.getFullYear(),now.getMonth()-i,1);
     keys.add(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));
   }
-  // También incluir meses con entradas (aunque sean más antiguos)
+  // Incluir meses con cualquier tipo de gasto (incluyendo Mi Bolsa)
   allEntries().forEach(e=>{if(e.fecha)keys.add(e.fecha.slice(0,7));});
-  // Y el mes actual
+  (data.gastosPersonales||[]).forEach(e=>{if(e.fecha)keys.add(e.fecha.slice(0,7));});
   keys.add(currentMonthKey());
   return [...keys].sort();
 }
