@@ -760,8 +760,10 @@ const SUBTABS=[
 /* ============================ STORAGE ============================ */
 async function load(){
   let raw=null;
-  try{const r=await window.storage.get(STORE_KEY,false);if(r&&r.value)raw=r.value;}catch(e){}
-  if(!raw){try{raw=localStorage.getItem(STORE_KEY);}catch(e){}}
+  // Primero intenta localStorage (GitHub Pages)
+  try{raw=localStorage.getItem(STORE_KEY);}catch(e){}
+  // Fallback: window.storage (artifact de Claude, solo si localStorage vacío)
+  if(!raw){try{const r=await window.storage.get(STORE_KEY,false);if(r&&r.value)raw=r.value;}catch(e){}}
   if(!raw){
     // Pre-load backup data
     const seed={"fondoFijo":10000,"casetas":[{"id":"mqvsrm8jot0p","fecha":"2026-06-25","lugar":"SAN MARCOS","monto":213,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato"},{"id":"mqzye4mc2jzn","fecha":"2026-06-29","lugar":"San Marcos","monto":213,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato"},{"id":"mr1d9tefwkly","fecha":"2026-06-29","lugar":"Sayula","monto":92,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato"},{"id":"mr6fve9kcdtc","fecha":"2026-07-03","lugar":"Yurecuaro","monto":600,"personas":2,"facturado":false,"viaje":"Campañas Yurecuaro"},{"id":"mrml84ryu41f","fecha":"2026-07-15","lugar":"San Marcos","monto":213,"personas":1,"facturado":false,"viaje":"Capacitación Capturista"}],"hospedaje":[{"id":"mqvu9hwqmoei","fecha":"2026-06-25","lugar":"LA PIEDAD, Mich","monto":552,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","noches":1,"habitacion":"sencilla"},{"id":"mqvuewwon5fs","fecha":"2026-06-26","lugar":"GUANAJUATO, Gto","monto":540,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","noches":1,"habitacion":"sencilla"},{"id":"mqvug0r7k5dp","fecha":"2026-06-28","lugar":"GUANAJUATO, Gto","monto":540,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","noches":1,"habitacion":"sencilla"},{"id":"mqx5hamr2fq3","fecha":"2026-06-27","lugar":"GUANAJUATO, Gto","monto":1250,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","noches":1,"habitacion":"sencilla"}],"comidas":[{"id":"mqvsxz71vpvu","fecha":"2026-06-25","lugar":"ZAPOTLAN EL GRANDE, Jal","monto":164,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Comida"},{"id":"mqvszfk9d8dy","fecha":"2026-06-25","lugar":"LA PIEDAD, Mich","monto":119,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Cena"},{"id":"mqvubbhn0oun","fecha":"2026-06-26","lugar":"GUANAJUATO, Gto","monto":140,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Desayuno"},{"id":"mqvud38l5s5f","fecha":"2026-06-26","lugar":"GUANAJUATO, Gto","monto":195,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Comida"},{"id":"mqvudx6ge7wq","fecha":"2026-06-26","lugar":"GUANAJUATO, Gto","monto":140,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Cena"},{"id":"mqx5bn7o0qzi","fecha":"2026-06-27","lugar":"GUANAJUATO, Gto","monto":139,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Desayuno"},{"id":"mqymxg000p80","fecha":"2026-06-28","lugar":"GUANAJUATO, Gto","monto":124,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Comida"},{"id":"mqymy23y8n0u","fecha":"2026-06-28","lugar":"GUANAJUATO, Gto","monto":154,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Cena"},{"id":"mqyn1hznkaeh","fecha":"2026-06-27","lugar":"GUANAJUATO, Gto","monto":235,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Comida"},{"id":"mqzjzekbgjqe","fecha":"2026-06-29","lugar":"GUANAJUATO, Gto","monto":209,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Comida"},{"id":"mqzydfotw8pv","fecha":"2026-06-29","lugar":"GUANAJUATO, Gto","monto":156,"personas":1,"facturado":false,"viaje":"Capacitación promotor Guanajuato","tipo":"Desayuno"},{"id":"mr5dbbom8r3r","fecha":"2026-07-03","lugar":"MANZANILLO, Col","monto":197,"personas":1,"facturado":false,"viaje":"Entrega de celular a capturista","tipo":"Comida"},{"id":"mre0cn97tnvl","fecha":"2026-07-09","lugar":"MANZANILLO, Col","monto":241,"personas":1,"facturado":false,"viaje":"Convenio Timsa","tipo":"Comida"},{"id":"mrml8vzhsud2","fecha":"2026-07-15","lugar":"ZAPOTLAN EL GRANDE, Jal","monto":192,"personas":1,"facturado":false,"viaje":"","tipo":"Comida"}],"tarifasCustom":{},"viajesCerrados":["Capacitación promotor Guanajuato","Campañas Yurecuaro","Entrega de celular a capturista"],"hiddenPlaces":[],"perfil":{"nombre":"MAURO MARTELL DENIS","empleado":"502778"},"gastosPersonales":[],"presupuesto":{}};
@@ -777,8 +779,10 @@ async function load(){
 }
 async function save(){
   const s=JSON.stringify(data);
-  try{await window.storage.set(STORE_KEY,s,false);}catch(e){}
+  // localStorage es el storage principal (persiste en GitHub Pages)
   try{localStorage.setItem(STORE_KEY,s);}catch(e){}
+  // También guardar en window.storage si está disponible (artifact de Claude)
+  try{await window.storage.set(STORE_KEY,s,false);}catch(e){}
 }
 
 /* ============================ HELPERS ============================ */
@@ -814,7 +818,20 @@ function authFor(type,e){
   return null;
 }
 function navLabel(k){const[y,m]=k.split('-');return MESES[+m-1].slice(0,3)+' '+y;}
-function monthKeysForNav(){const keys=new Set();allEntries().forEach(e=>{if(e.fecha)keys.add(e.fecha.slice(0,7));});const cur=currentMonthKey();keys.add(cur);return [...keys].sort();}
+function monthKeysForNav(){
+  const keys=new Set();
+  // Siempre incluir los últimos 12 meses
+  const now=new Date();
+  for(let i=0;i<12;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    keys.add(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));
+  }
+  // También incluir meses con entradas (aunque sean más antiguos)
+  allEntries().forEach(e=>{if(e.fecha)keys.add(e.fecha.slice(0,7));});
+  // Y el mes actual
+  keys.add(currentMonthKey());
+  return [...keys].sort();
+}
 function gastoParaMes(key){return allEntries().filter(e=>(e.fecha||'').slice(0,7)===key).reduce((s,e)=>s+amt(e),0);}
 function byMonth(){
   const map={};
